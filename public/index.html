@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ranking de Vendas</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-container">
+    <header class="page-header">
+      <div>
+        <span class="brand-icon">🏆</span>
+        <div>
+          <h1>Ranking de Vendas</h1>
+          <p>Gerencie suas vendas e acompanhe o desempenho da equipe.</p>
+        </div>
+      </div>
+      <div class="profile-card">
+        <span>Olá!</span>
+        <strong>Equipe de Vendas</strong>
+      </div>
+    </header>
+
+    <section class="stats-grid">
+      <article class="stat-card">
+        <span class="stat-label">Total de Vendas</span>
+        <strong id="total-sales">0</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Vendedores</span>
+        <strong id="sellers-count">0</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Registros</span>
+        <strong id="records-count">0</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-label">Líder</span>
+        <strong id="leader-name">-</strong>
+      </article>
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="panel panel-form">
+        <div class="panel-header">
+          <h2>Nova Venda</h2>
+          <p>Registre uma nova venda preenchendo os campos abaixo.</p>
+        </div>
+
+        <form id="sale-form">
+          <input id="saleId" name="saleId" type="hidden" value="" />
+
+          <label>Seu nome</label>
+          <input id="sellerName" name="sellerName" type="text" placeholder="Ex: Pedro" required />
+
+          <label>Nome do cliente</label>
+          <input id="customerName" name="customerName" type="text" placeholder="Ex: Maria" required />
+
+          <label>Endereço do cliente</label>
+          <input id="customerAddress" name="customerAddress" type="text" placeholder="Ex: Rua das Flores, 123" required />
+
+          <label>Quantidade vendida</label>
+          <input id="quantity" name="quantity" type="number" min="1" value="1" required />
+
+          <div class="form-actions">
+            <button id="submit-button" type="submit">Enviar Venda</button>
+            <button id="cancel-button" type="button" class="cancel-button hidden">Cancelar</button>
+          </div>
+        </form>
+
+        <div id="message" class="message"></div>
+      </div>
+
+      <div class="panel panel-ranking">
+        <div class="panel-header">
+          <h2>Ranking</h2>
+          <p>Classificação dos vendedores por total de vendas.</p>
+        </div>
+        <div class="ranking-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Posição</th>
+                <th>Vendedor</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="ranking-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel panel-history">
+      <div class="panel-header history-header">
+        <div>
+          <h2>Histórico de Vendas</h2>
+          <p>Visualize e gerencie todas as vendas registradas.</p>
+        </div>
+        <button id="clear-history-btn" class="btn-clear-history">Limpar Histórico</button>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Vendedor</th>
+              <th>Cliente</th>
+              <th>Endereço</th>
+              <th>Qtd</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="sales-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
