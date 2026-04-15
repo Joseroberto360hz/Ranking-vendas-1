@@ -1,3 +1,13 @@
+const UI_TEXT = {
+  createLabel: 'Salvar registro',
+  updateLabel: 'Atualizar registro',
+  emptyRanking: 'Nenhum item no ranking ainda.',
+  emptyHistory: 'Nenhum registro encontrado.',
+  openStatus: 'Em aberto',
+  doneStatus: 'Concluido',
+  doneAction: 'Concluir',
+};
+
 const form = document.getElementById('sale-form');
 const saleIdInput = document.getElementById('saleId');
 const submitButton = document.getElementById('submit-button');
@@ -9,12 +19,27 @@ const totalSalesEl = document.getElementById('total-sales');
 const sellersCountEl = document.getElementById('sellers-count');
 const recordsCountEl = document.getElementById('records-count');
 const leaderNameEl = document.getElementById('leader-name');
+const clearHistoryBtn = document.getElementById('clear-history-btn');
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[character]));
+}
+
+function renderEmptyRow(colspan, text) {
+  return `<tr><td colspan="${colspan}" class="empty-state">${escapeHtml(text)}</td></tr>`;
+}
 
 function resetForm() {
   saleIdInput.value = '';
   form.reset();
   form.quantity.value = 1;
-  submitButton.textContent = 'Enviar Venda';
+  submitButton.textContent = UI_TEXT.createLabel;
   cancelButton.classList.add('hidden');
 }
 
@@ -23,49 +48,80 @@ function showMessage(text, type = 'success') {
   message.className = `message ${type}`;
 }
 
+async function fetchJson(url, options) {
+  const response = await fetch(url, options);
+  const contentType = response.headers.get('content-type') || '';
+  const payload = contentType.includes('application/json') ? await response.json() : null;
+
+  if (!response.ok) {
+    throw new Error(payload?.error || payload?.message || 'Erro ao processar a requisicao.');
+  }
+
+  return payload;
+}
+
 async function fetchRanking() {
-  const response = await fetch('/api/ranking');
-  const ranking = await response.json();
-  rankingBody.innerHTML = ranking.map(item => `
-    <tr>
-      <td>${item.rank}º</td>
-      <td>${item.sellerName}</td>
-      <td>${item.totalQuantity}</td>
-    </tr>
-  `).join('');
+  const ranking = await fetchJson('/api/ranking');
+
+  rankingBody.innerHTML = ranking.length
+    ? ranking.map((item) => `
+      <tr>
+        <td>${item.rank}</td>
+        <td>${escapeHtml(item.ownerName || item.sellerName)}</td>
+        <td>${item.score || item.totalQuantity}</td>
+      </tr>
+    `).join('')
+    : renderEmptyRow(3, UI_TEXT.emptyRanking);
+
   return ranking;
 }
 
 async function fetchSales() {
-  const response = await fetch('/api/sales');
-  const sales = await response.json();
-  salesBody.innerHTML = sales.map(sale => {
-    const statusClass = sale.status === 'entregue' ? 'status-entregue' : 'status-pendente';
-    const statusText = sale.status === 'entregue' ? '✓ Entregue' : '⏳ Pendente';
-    const deliverButton = sale.status === 'pendente' ? `<button type="button" class="action-button deliver-btn" data-id="${sale.id}">Pedido Entregue</button>` : '';
+  const sales = await fetchJson('/api/sales');
 
-    return `
-      <tr>
-        <td>${sale.sellerName}</td>
-        <td>${sale.customerName}</td>
-        <td>${sale.customerAddress}</td>
-        <td>${sale.quantity}</td>
-        <td><span class="status ${statusClass}">${statusText}</span></td>
-        <td>
-          ${deliverButton}
-          <button type="button" class="action-button edit-btn" data-id="${sale.id}" data-seller="${sale.sellerName}" data-customer="${sale.customerName}" data-address="${sale.customerAddress}" data-qty="${sale.quantity}">Editar</button>
-          <button type="button" class="action-button delete-btn" data-id="${sale.id}">Deletar</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
+  salesBody.innerHTML = sales.length
+    ? sales.map((sale) => {
+      const isDone = sale.status === 'entregue';
+      const statusClass = isDone ? 'status-entregue' : 'status-pendente';
+      const statusText = isDone ? UI_TEXT.doneStatus : UI_TEXT.openStatus;
+      const deliverButton = isDone
+        ? ''
+        : `<button type="button" class="action-button deliver-btn" data-id="${sale.id}">${UI_TEXT.doneAction}</button>`;
+
+      return `
+        <tr>
+          <td>${escapeHtml(sale.ownerName || sale.sellerName)}</td>
+          <td>${escapeHtml(sale.referenceName || sale.customerName)}</td>
+          <td>${escapeHtml(sale.details || sale.customerAddress)}</td>
+          <td>${sale.score || sale.quantity}</td>
+          <td><span class="status ${statusClass}">${statusText}</span></td>
+          <td>
+            ${deliverButton}
+            <button
+              type="button"
+              class="action-button edit-btn"
+              data-id="${sale.id}"
+              data-seller="${escapeHtml(sale.sellerName)}"
+              data-customer="${escapeHtml(sale.customerName)}"
+              data-address="${escapeHtml(sale.customerAddress)}"
+              data-qty="${sale.quantity}"
+            >
+              Editar
+            </button>
+            <button type="button" class="action-button delete-btn" data-id="${sale.id}">Excluir</button>
+          </td>
+        </tr>
+      `;
+    }).join('')
+    : renderEmptyRow(6, UI_TEXT.emptyHistory);
+
   return sales;
 }
 
 function updateSummary(sales, ranking) {
   const totalQuantity = sales.reduce((sum, sale) => sum + Number(sale.quantity), 0);
-  const sellers = new Set(sales.map(sale => sale.sellerName));
-  const leaderName = ranking.length ? ranking[0].sellerName : '-';
+  const sellers = new Set(sales.map((sale) => sale.sellerName));
+  const leaderName = ranking.length ? ranking[0].ownerName || ranking[0].sellerName : '-';
 
   totalSalesEl.textContent = totalQuantity;
   sellersCountEl.textContent = sellers.size;
@@ -79,20 +135,15 @@ async function loadData() {
 }
 
 async function saveSale(saleData, method, url) {
-  const response = await fetch(url, {
+  await fetchJson(url, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(saleData),
   });
 
-  if (response.ok) {
-    resetForm();
-    await loadData();
-    showMessage(method === 'PUT' ? 'Venda atualizada com sucesso!' : 'Venda registrada com sucesso!');
-  } else {
-    const error = await response.json();
-    showMessage(error.error || 'Erro ao salvar venda.', 'error');
-  }
+  resetForm();
+  await loadData();
+  showMessage(method === 'PUT' ? 'Registro atualizado com sucesso!' : 'Registro salvo com sucesso!');
 }
 
 form.addEventListener('submit', async (event) => {
@@ -106,16 +157,21 @@ form.addEventListener('submit', async (event) => {
     quantity: Number(form.quantity.value),
   };
 
-  if (!saleData.sellerName || !saleData.customerName || !saleData.customerAddress || saleData.quantity < 1) {
+  if (!saleData.sellerName || !saleData.customerName || !saleData.customerAddress || !Number.isInteger(saleData.quantity) || saleData.quantity < 1) {
     showMessage('Preencha todos os campos corretamente.', 'error');
     return;
   }
 
-  const saleId = saleIdInput.value;
-  if (saleId) {
-    await saveSale(saleData, 'PUT', `/api/sales/${saleId}`);
-  } else {
-    await saveSale(saleData, 'POST', '/api/sales');
+  try {
+    const saleId = saleIdInput.value;
+
+    if (saleId) {
+      await saveSale(saleData, 'PUT', `/api/sales/${saleId}`);
+    } else {
+      await saveSale(saleData, 'POST', '/api/sales');
+    }
+  } catch (error) {
+    showMessage(error.message || 'Erro ao salvar o registro.', 'error');
   }
 });
 
@@ -130,68 +186,71 @@ salesBody.addEventListener('click', async (event) => {
   const deliverButton = event.target.closest('.deliver-btn');
 
   if (editButton) {
-    const id = editButton.dataset.id;
     form.sellerName.value = editButton.dataset.seller;
     form.customerName.value = editButton.dataset.customer;
     form.customerAddress.value = editButton.dataset.address;
     form.quantity.value = editButton.dataset.qty;
-    saleIdInput.value = id;
-    submitButton.textContent = 'Atualizar Venda';
+    saleIdInput.value = editButton.dataset.id;
+    submitButton.textContent = UI_TEXT.updateLabel;
     cancelButton.classList.remove('hidden');
-    showMessage('Modo de edição ativado. Atualize os dados ou cancele.', 'success');
+    showMessage('Modo de edicao ativado. Atualize os dados ou cancele.');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
   }
 
   if (deleteButton) {
-    const id = deleteButton.dataset.id;
-    const confirmed = confirm('Deseja realmente deletar esta venda?');
-    if (!confirmed) return;
+    const confirmed = confirm('Deseja realmente excluir este registro?');
+    if (!confirmed) {
+      return;
+    }
 
-    const response = await fetch(`/api/sales/${id}`, { method: 'DELETE' });
-    if (response.ok) {
+    try {
+      await fetchJson(`/api/sales/${deleteButton.dataset.id}`, { method: 'DELETE' });
       resetForm();
       await loadData();
-      showMessage('Venda deletada com sucesso!');
-    } else {
-      showMessage('Erro ao deletar venda.', 'error');
+      showMessage('Registro excluido com sucesso!');
+    } catch (error) {
+      showMessage(error.message || 'Erro ao excluir o registro.', 'error');
     }
+
+    return;
   }
 
   if (deliverButton) {
-    const id = deliverButton.dataset.id;
-    const response = await fetch(`/api/sales/${id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'entregue' }),
-    });
+    try {
+      await fetchJson(`/api/sales/${deliverButton.dataset.id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'concluido' }),
+      });
 
-    if (response.ok) {
       await loadData();
-      showMessage('Pedido marcado como entregue!');
-    } else {
-      showMessage('Erro ao marcar como entregue.', 'error');
+      showMessage('Registro marcado como concluido!');
+    } catch (error) {
+      showMessage(error.message || 'Erro ao atualizar o status.', 'error');
     }
   }
 });
 
-const clearHistoryBtn = document.getElementById('clear-history-btn');
 clearHistoryBtn.addEventListener('click', async () => {
-  const confirmed = confirm('Deseja realmente deletar TODO o histórico de vendas? Esta ação é irreversível!');
-  if (!confirmed) return;
+  const confirmed = confirm('Deseja realmente apagar todo o historico? Esta acao nao pode ser desfeita.');
+  if (!confirmed) {
+    return;
+  }
 
-  const finalConfirm = confirm('ATENÇÃO: Todos os dados serão permanentemente deletados. Tem certeza?');
-  if (!finalConfirm) return;
-
-  const response = await fetch('/api/sales/clean/all', { method: 'DELETE' });
-  if (response.ok) {
+  try {
+    await fetchJson('/api/sales/clean/all', { method: 'DELETE' });
     resetForm();
     await loadData();
-    showMessage('Histórico de vendas deletado com sucesso!');
-  } else {
-    showMessage('Erro ao deletar histórico.', 'error');
+    showMessage('Historico apagado com sucesso!');
+  } catch (error) {
+    showMessage(error.message || 'Erro ao limpar o historico.', 'error');
   }
 });
 
 window.addEventListener('load', () => {
-  loadData();
+  resetForm();
+  loadData().catch((error) => {
+    showMessage(error.message || 'Nao foi possivel carregar os dados.', 'error');
+  });
 });

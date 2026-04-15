@@ -1,77 +1,135 @@
-# Ranking de Vendas
+# Painel de Ranking
 
-Projeto simples de backend + frontend com ranking automático de vendas usando MySQL.
+Aplicacao Node.js com Express, Sequelize, MySQL e frontend estatico para registrar resultados, gerar ranking e acompanhar historico.
 
-## O que o projeto faz
+## O que o sistema faz
 
-- Recebe vendas com:
-  - seu nome (vendedor)
-  - nome do cliente
-  - endereço do cliente
-  - quantidade vendida
-- Exibe um ranking de vendedores por total de quantidade vendida.
-- Mostra histórico de vendas.
+- cadastra registros com responsavel, referencia, detalhe e pontuacao
+- mostra ranking por pontuacao total
+- lista o historico completo
+- permite editar, excluir e concluir registros
 
-## Tecnologias
+## Requisitos
 
-- Node.js + Express
-- Sequelize + MySQL
-- Frontend HTML/CSS/JavaScript
+- Node.js
+- MySQL
 
-## Configuração MySQL Workbench
+## Configuracao
 
-1. Abra o MySQL Workbench.
-2. Crie um schema/banco de dados chamado `ranking_vendas`.
-3. Configure o usuário e senha MySQL.
-
-## Executando o projeto
-
-1. No terminal, instale as dependências:
+1. Instale as dependencias:
 
 ```bash
 npm install
 ```
 
-2. Crie um arquivo `.env` na pasta do projeto com base em `.env.example`:
+2. Crie o arquivo `.env` com base no exemplo:
 
 ```bash
 copy .env.example .env
 ```
 
-3. Atualize as credenciais MySQL no arquivo `.env`.
+3. Ajuste os dados do banco no `.env`.
 
-4. Inicie o servidor:
+## Variaveis importantes
+
+- `HOST`: use `0.0.0.0` para permitir acesso externo
+- `PORT`: porta da aplicacao
+- `ALLOWED_ORIGINS`: `*` para liberar acesso de qualquer origem ou uma lista separada por virgula
+- `PUBLIC_URL`: URL publica final do site, usada para exibir o endereco correto no log
+- `TRUST_PROXY`: use `true` se a aplicacao ficar atras de proxy reverso
+- `DATABASE_URL`: string completa de conexao MySQL para hospedagem
+- `DB_SSL`: use `true` se seu banco remoto exigir SSL
+- `DB_SSL_REJECT_UNAUTHORIZED`: use `false` apenas quando o provedor do banco pedir isso
+
+## Como iniciar
 
 ```bash
 npm start
 ```
 
-5. Abra no navegador:
+Quando iniciar, o servidor mostra no terminal os enderecos que podem ser usados para acessar o site.
 
-```bash
-http://localhost:3000
-```
+## Para outras pessoas usarem o site
 
-## Endpoints disponíveis
+### Mesma rede local
 
+1. Deixe `HOST=0.0.0.0` no `.env`.
+2. Inicie o projeto com `npm start`.
+3. Pegue o endereco mostrado no terminal, como `http://192.168.x.x:3000`.
+4. Se necessario, libere a porta `3000` no firewall do Windows.
+5. As outras pessoas da mesma rede poderao abrir esse endereco no navegador.
+
+### Pela internet
+
+Para acesso fora da sua rede local, voce ainda vai precisar:
+
+- hospedar esta aplicacao em um servidor Node.js
+- usar um banco MySQL acessivel por esse servidor
+- configurar as variaveis do `.env` no ambiente de hospedagem
+- apontar um dominio ou compartilhar a URL publica gerada pela hospedagem
+
+O codigo ja esta preparado para isso com:
+
+- `HOST` configuravel
+- `PORT` configuravel
+- `ALLOWED_ORIGINS` configuravel
+- `PUBLIC_URL` configuravel
+- `DATABASE_URL` para banco remoto
+- `TRUST_PROXY` para ambientes com proxy
+- suporte opcional a SSL no banco
+- endpoint de saude em `GET /api/health`
+- `Dockerfile` para deploy em container
+
+## Endpoints
+
+- `GET /api/health`
+- `GET /api/sales`
 - `POST /api/sales`
 - `PUT /api/sales/:id`
 - `DELETE /api/sales/:id`
-- `GET /api/sales`
+- `PATCH /api/sales/:id/status`
+- `DELETE /api/sales/clean/all`
 - `GET /api/ranking`
 
-### Exemplo de body para POST /api/sales
+## Campos aceitos na API
 
-```json
-{
-  "sellerName": "Pedro",
-  "customerName": "Maria",
-  "customerAddress": "Rua das Flores, 123",
-  "quantity": 10
-}
+- formato original: `sellerName`, `customerName`, `customerAddress`, `quantity`
+- formato generico: `ownerName`, `referenceName`, `details`, `score`
+- status aceitos: `pendente`, `aberto`, `concluido`, `entregue`
+
+## Checagem rapida
+
+```bash
+npm run check
 ```
 
-## Observações
+## Rede movel
 
-- O ranking é gerado automaticamente pelo backend a partir do total de quantidade vendida por vendedor.
-- A primeira vez que o servidor rodar ele cria a tabela automaticamente pelo Sequelize.
+Se o site precisa abrir em qualquer 4G ou 5G, rodar na sua maquina de casa nao basta. Voce precisa de uma URL publica.
+
+Os caminhos mais comuns sao:
+
+- publicar a aplicacao em uma hospedagem Node.js e usar um banco MySQL remoto
+- usar um tunel publico temporario para testes
+- configurar redirecionamento de porta no roteador e um IP publico valido
+
+Para producao, o caminho mais estavel e hospedar a aplicacao e o banco em infraestrutura publica.
+
+## Deploy com Railway
+
+O projeto ja esta preparado para Railway com:
+
+- `Dockerfile`
+- `railway.toml`
+- suporte a `DATABASE_URL`
+- suporte direto a `MYSQL_URL`, `MYSQLHOST`, `MYSQLPORT`, `MYSQLUSER`, `MYSQLPASSWORD` e `MYSQLDATABASE`
+
+Passo a passo:
+
+1. Envie este codigo atualizado para o GitHub.
+2. No Railway, crie um novo projeto a partir do seu repositorio.
+3. No mesmo projeto, adicione um banco `MySQL`.
+4. No servico da aplicacao, crie a variavel:
+   - `MYSQL_URL=${{MySQL.MYSQL_URL}}`
+5. Se quiser um dominio publico fixo, adicione um dominio no Railway.
+6. Depois do deploy, abra a URL publica gerada pelo Railway em qualquer celular ou computador.

@@ -3,32 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ranking de Vendas</title>
+  <title>Painel de Ranking</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="app-container">
     <header class="page-header">
-      <div>
-        <span class="brand-icon">🏆</span>
+      <div class="brand-block">
+        <span class="brand-icon">&#128202;</span>
         <div>
-          <h1>Ranking de Vendas</h1>
-          <p>Gerencie suas vendas e acompanhe o desempenho da equipe.</p>
+          <h1>Painel de Ranking</h1>
+          <p>Registre resultados, acompanhe o desempenho e organize o historico em um so lugar.</p>
         </div>
       </div>
       <div class="profile-card">
-        <span>Olá!</span>
-        <strong>Equipe de Vendas</strong>
+        <span>Uso flexivel</span>
+        <strong>Pronto para qualquer equipe</strong>
       </div>
     </header>
 
     <section class="stats-grid">
       <article class="stat-card">
-        <span class="stat-label">Total de Vendas</span>
+        <span class="stat-label">Total acumulado</span>
         <strong id="total-sales">0</strong>
       </article>
       <article class="stat-card">
-        <span class="stat-label">Vendedores</span>
+        <span class="stat-label">Participantes</span>
         <strong id="sellers-count">0</strong>
       </article>
       <article class="stat-card">
@@ -36,7 +36,7 @@
         <strong id="records-count">0</strong>
       </article>
       <article class="stat-card">
-        <span class="stat-label">Líder</span>
+        <span class="stat-label">Lider</span>
         <strong id="leader-name">-</strong>
       </article>
     </section>
@@ -44,27 +44,27 @@
     <section class="dashboard-grid">
       <div class="panel panel-form">
         <div class="panel-header">
-          <h2>Nova Venda</h2>
-          <p>Registre uma nova venda preenchendo os campos abaixo.</p>
+          <h2>Novo registro</h2>
+          <p>Adicione uma nova entrada para atualizar o ranking e o historico.</p>
         </div>
 
         <form id="sale-form">
           <input id="saleId" name="saleId" type="hidden" value="" />
 
-          <label>Seu nome</label>
-          <input id="sellerName" name="sellerName" type="text" placeholder="Ex: Pedro" required />
+          <label for="sellerName">Responsavel</label>
+          <input id="sellerName" name="sellerName" type="text" placeholder="Ex: Ana" required />
 
-          <label>Nome do cliente</label>
-          <input id="customerName" name="customerName" type="text" placeholder="Ex: Maria" required />
+          <label for="customerName">Pessoa de referencia</label>
+          <input id="customerName" name="customerName" type="text" placeholder="Ex: Cliente Alpha" required />
 
-          <label>Endereço do cliente</label>
-          <input id="customerAddress" name="customerAddress" type="text" placeholder="Ex: Rua das Flores, 123" required />
+          <label for="customerAddress">Detalhe</label>
+          <input id="customerAddress" name="customerAddress" type="text" placeholder="Ex: Loja Centro, bairro ou observacao" required />
 
-          <label>Quantidade vendida</label>
-          <input id="quantity" name="quantity" type="number" min="1" value="1" required />
+          <label for="quantity">Pontuacao</label>
+          <input id="quantity" name="quantity" type="number" min="1" step="1" value="1" required />
 
           <div class="form-actions">
-            <button id="submit-button" type="submit">Enviar Venda</button>
+            <button id="submit-button" type="submit">Salvar registro</button>
             <button id="cancel-button" type="button" class="cancel-button hidden">Cancelar</button>
           </div>
         </form>
@@ -75,15 +75,15 @@
       <div class="panel panel-ranking">
         <div class="panel-header">
           <h2>Ranking</h2>
-          <p>Classificação dos vendedores por total de vendas.</p>
+          <p>Classificacao dos participantes por pontuacao total.</p>
         </div>
         <div class="ranking-table-wrapper">
           <table>
             <thead>
               <tr>
-                <th>Posição</th>
-                <th>Vendedor</th>
-                <th>Total</th>
+                <th>Posicao</th>
+                <th>Participante</th>
+                <th>Pontos</th>
               </tr>
             </thead>
             <tbody id="ranking-body"></tbody>
@@ -95,21 +95,21 @@
     <section class="panel panel-history">
       <div class="panel-header history-header">
         <div>
-          <h2>Histórico de Vendas</h2>
-          <p>Visualize e gerencie todas as vendas registradas.</p>
+          <h2>Historico de registros</h2>
+          <p>Visualize e gerencie tudo o que foi adicionado ao painel.</p>
         </div>
-        <button id="clear-history-btn" class="btn-clear-history">Limpar Histórico</button>
+        <button id="clear-history-btn" class="btn-clear-history" type="button">Limpar historico</button>
       </div>
       <div class="table-wrapper">
         <table>
           <thead>
             <tr>
-              <th>Vendedor</th>
-              <th>Cliente</th>
-              <th>Endereço</th>
-              <th>Qtd</th>
+              <th>Participante</th>
+              <th>Referencia</th>
+              <th>Detalhe</th>
+              <th>Pontos</th>
               <th>Status</th>
-              <th>Ações</th>
+              <th>Acoes</th>
             </tr>
           </thead>
           <tbody id="sales-body"></tbody>
